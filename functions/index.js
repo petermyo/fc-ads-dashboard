@@ -22,7 +22,7 @@ app.post('/api/auth/login', async (c) => {
     try {
         // 1. Query D1 database to find the user by username
         // Ensure you select the password_hash column for comparison
-        const { results } = await env.DB.prepare('SELECT id, username, password_hash FROM users WHERE username = ?')
+        const { results } = await env.DB.prepare('SELECT id, username, password FROM users WHERE username = ?')
                                         .bind(username)
                                         .all();
 
@@ -34,7 +34,7 @@ app.post('/api/auth/login', async (c) => {
         const user = results[0];
 
         // 2. Compare the provided plaintext password with the hashed password from D1
-        const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+        const isPasswordValid = await bcrypt.compare(password, user.password);
         
         // If passwords do not match
         if (!isPasswordValid) {
@@ -91,7 +91,15 @@ app.get('/api/ads', async (c) => {
     }
 });
 
-// Export the Hono app's fetch method directly.
-// Cloudflare Pages will use this `fetch` handler as the main entry point
-// for API routes defined within this `functions` directory.
-export default app.fetch;
+// This is the standard Cloudflare Pages Functions entry point.
+// It receives the incoming request and context, then passes it to the Hono app.
+// This structure helps Cloudflare Pages correctly identify and route your API endpoints.
+export async function onRequest(context) {
+    // context.request: The incoming HTTP request.
+    // context.env: Environment variables and D1 bindings for the function.
+    // context.executionContext: The execution context (e.g., for `waitUntil`).
+    
+    // Delegate the request handling to the Hono app.
+    // Hono will then match the request URL against its defined routes (/api/auth/login, /api/ads).
+    return app.fetch(context.request, context.env, context.executionContext);
+}
