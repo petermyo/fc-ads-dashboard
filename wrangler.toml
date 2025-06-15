@@ -18,5 +18,8 @@ JWT_SECRET = "your_super_secret_jwt_key_CHANGE_THIS_IN_PRODUCTION_AND_USE_WRANGL
 
 # D1 database binding for your Pages Functions
 # This allows your functions to interact with your D1 database using `env.DB`
-[d1_databases]
-DB = { binding = "DB", database_name = "aduserdb", database_id = "47348cd6-9639-4e6a-9fa3-dcddf6fd7af8" } # REPLACE THIS WITH YOUR ACTUAL D1 DATABASE ID
+
+[[d1_databases]]
+binding = 'DB' # This will be accessible as env.DB in your Pages Functions
+database_name = 'aduserdb' # IMPORTANT: Replace with your actual D1 database name
+database_id = '47348cd6-9639-4e6a-9fa3-dcddf6fd7af8' # IMPORTANT: Replace with your actual D1 database ID
