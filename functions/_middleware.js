@@ -1,11 +1,12 @@
 // functions/_middleware.js
-import { verify } from 'jose';
 import { Hono } from 'hono';
+import { verify } from 'jose';
 
 // Create a Hono app instance for middleware
 const app = new Hono();
 
 // This middleware will run for all requests to pages functions in this directory tree.
+// We'll export the Hono app's fetch method directly for Cloudflare Pages.
 app.use('*', async (c, next) => {
     const env = c.env; // Cloudflare Pages automatically passes environment variables here
     const url = new URL(c.req.url);
@@ -28,7 +29,7 @@ app.use('*', async (c, next) => {
         // Verify the JWT using the secret key from environment variables
         const { payload } = await verify(
             token,
-            new TextEncoder().encode(env.JWT_SECRET)
+            new TextEncoder().encode(env.JWT_SECRET) // Use the JWT_SECRET from environment
         );
 
         // Attach the decoded user payload to the context for downstream handlers
@@ -44,5 +45,5 @@ app.use('*', async (c, next) => {
     }
 });
 
-// Export the Hono app as the default handler for the middleware
-export default app;
+// Export the Hono app's fetch method directly for Cloudflare Pages to pick up as a Worker.
+export default app.fetch;
