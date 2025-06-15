@@ -1,7 +1,7 @@
 name = "futurecom-ads-dashboard"
 # This is the crucial top-level property for Cloudflare Pages to identify
 # where your static assets are located after your build command runs.
-pages_build_output_dir = "public"
+pages_build_output_dir = "build"
 
 # Ensure this compatibility date is current or slightly in the future
 # to use the latest Workers runtime features.
