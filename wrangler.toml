@@ -1,0 +1,20 @@
+name = "futurecom-ads-dashboard"
+# We don't need a `main` entry point as Pages Functions handle routing
+compatibility_date = "2024-06-15" # Use a recent date for latest Workers runtime features
+
+[vars]
+# Your external data source URL, accessed securely by the Worker
+DATA_URL = "https://opensheet.elk.sh/1n66ctdtHrySM957k4TFRYfO6JRmJ9Y5oBGaIMS3g8PY/result"
+# Secret key for JWT signing/verification.
+# **IMPORTANT**: For production, set this as a secret: `wrangler secret put JWT_SECRET`
+# Do NOT commit sensitive keys directly to your Git repository.
+JWT_SECRET = ""
+
+[d1_databases]
+# Bind your D1 database. This makes `env.DB` available in your Workers.
+DB = { binding = "DB", database_name = "aduserdb", database_id = "47348cd6-9639-4e6a-9fa3-dcddf6fd7af8" } # REPLACE THIS WITH YOUR ACTUAL D1 DATABASE ID
+
+# Cloudflare Pages specific configuration
+[[pages_build_output]]
+# This tells Cloudflare Pages where your static assets are located
+bucket = "public"

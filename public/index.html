@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futurecom Ads Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for Material-UI like shadows and rounded corners */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f5f5; /* Light grey background */
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .shadow-md-custom {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Specific styles for the blue summary cards, updated to match logo colors */
+        .summary-card {
+            padding: 1.5rem;
+            text-align: left;
+            background-color: #003399; /* Darker blue from logo */
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* Shadow-md */
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-radius: 0.5rem; /* rounded-lg */
+        }
+
+        .summary-card .title {
+            font-size: 0.875rem; /* text-sm */
+        }
+
+        .summary-card .value {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: bold;
+        }
+
+        /* Custom message box for alerts */
+        .message-box-container {
+            position: fixed;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .message-box {
+            background-color: #f44336; /* Red for error */
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .message-box.success {
+            background-color: #4CAF50; /* Green for success */
+        }
+
+        .message-box-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Table header styles for sorting */
+        th {
+            cursor: pointer;
+        }
+
+        /* Loading spinner container */
+        .loading-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 40vh;
+        }
+
+        /* Simple spinner */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #003399; /* Spinner color to match new theme */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Hide elements by default for conditional rendering */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Login Section -->
+    <div id="login-section" class="flex flex-col items-center justify-center min-h-screen bg-gray-100 hidden">
+        <div class="bg-white p-8 rounded-lg shadow-md-custom text-center max-w-sm w-full">
+            <!-- Placeholder for your logo. Ensure f-logo.jpg is in the public directory -->
+            <img src="asset/f-logo.jpg" alt="Company Logo" class="mx-auto mb-6 w-32 h-auto rounded-lg" onerror="this.onerror=null;this.src='https://placehold.co/128x128/cccccc/ffffff?text=LOGO';">
+            <h1 class="text-2xl font-bold text-blue-900 mb-4">Login to Futurecom Ads Dashboard</h1>
+            <form id="login-form" class="mt-4">
+                <input type="text" id="username" placeholder="Username" required
+                    class="w-full p-3 mb-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="password" id="password" placeholder="Password" required
+                    class="w-full p-3 mb-6 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button type="submit" id="login-btn"
+                    class="w-full py-2.5 bg-blue-900 text-white font-semibold rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50">
+                    Login
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Application Section (Dashboard) -->
+    <div id="app-section" class="flex flex-col min-h-screen hidden">
+        <!-- Navigation Bar -->
+        <nav class="bg-blue-900 shadow-md">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center">
+                        <h1 class="text-white text-xl font-semibold flex-shrink-0">
+                            Ads Dashboard <span id="current-user-display"></span>
+                        </h1>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button id="dashboard-btn"
+                            class="text-white px-3 py-2 rounded-md text-sm font-medium">
+                            Dashboard
+                        </button>
+                        <button id="summary-btn"
+                            class="text-white px-3 py-2 rounded-md text-sm font-medium">
+                            Summary
+                        </button>
+                        <button id="users-btn"
+                            class="text-white px-3 py-2 rounded-md text-sm font-medium">
+                            Users
+                        </button>
+                        <button id="reports-btn"
+                            class="text-white px-3 py-2 rounded-md text-sm font-medium">
+                            Reports
+                        </button>
+                        <button id="logout-btn"
+                            class="ml-4 px-3 py-2 rounded-md text-sm font-medium bg-blue-800 hover:bg-blue-700 text-white">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="p-4 max-w-7xl mx-auto w-full mt-4 flex-grow">
+            <!-- Error message display -->
+            <div id="error-message" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <strong class="font-bold">Error!</strong>
+                <span class="block sm:inline" id="error-message-text"></span>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="loading-spinner" class="loading-container hidden">
+                <div class="spinner"></div>
+                <p class="ml-2 text-lg text-gray-600">Loading Ads Data...</p>
+            </div>
+
+            <!-- Dashboard Content (hidden by default, shown after loading) -->
+            <div id="dashboard-content-area" class="hidden">
+                <!-- Summary Section Container -->
+                <div id="summary-section" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4 mb-8">
+                    <!-- Summary cards will be dynamically inserted here by updateSummaryCards() -->
+                </div>
+
+                <!-- Filters Section -->
+                <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Filters</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                        <input type="text" id="campaign-search" placeholder="Campaign Name"
+                            class="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="text" id="adsname-search" placeholder="Ads Name"
+                            class="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <select id="platform-filter"
+                            class="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="All">All Platforms</option>
+                        </select>
+                        <select id="objective-filter"
+                            class="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="All">All Objectives</option>
+                        </select>
+                        <select id="date-range-filter"
+                            class="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="All">All Time</option>
+                            <option value="Last 7 Days">Last 7 Days</option>
+                            <option value="Last 30 Days">Last 30 Days</option>
+                            <option value="Last Month">Last Month</option>
+                            <option value="Custom">Custom Date</option>
+                        </select>
+                        <input type="date" id="custom-start-date" placeholder="Start Date"
+                            class="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 hidden">
+                        <input type="date" id="custom-end-date" placeholder="End Date"
+                            class="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 hidden">
+                    </div>
+                </div>
+
+                <!-- Detailed Report Table -->
+                <div id="detailed-report-panel" class="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-gray-800">Detailed Report</h2>
+                        <div class="flex space-x-2">
+                            <button id="export-excel-dashboard" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md">
+                                Export Excel
+                            </button>
+                            <button id="export-csv-dashboard" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md">
+                                Export CSV
+                            </button>
+                        </div>
+                    </div>
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="Date">Date <span id="sort-icon-Date"></span></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="Campaign">Campaign <span id="sort-icon-Campaign"></span></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="AdsName">Ads Name <span id="sort-icon-AdsName"></span></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="Platform">Platform <span id="sort-icon-Platform"></span></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="Objective">Objective <span id="sort-icon-Objective"></span></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="Impressions">Impressions <span id="sort-icon-Impressions"></span></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="Clicks">Clicks <span id="sort-icon-Clicks"></span></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="CTR">CTR <span id="sort-icon-CTR"></span></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="Budget">Budget <span id="sort-icon-Budget"></span></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="Spent">Spent <span id="sort-icon-Spent"></span></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="CostMetric">Cost Metric <span id="sort-icon-CostMetric"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailed-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Rows will be dynamically inserted here -->
+                        </tbody>
+                    </table>
+                    <!-- Pagination Controls -->
+                    <div class="flex justify-between items-center mt-4">
+                        <div>
+                            <label for="rows-per-page" class="text-sm text-gray-600">Rows per page:</label>
+                            <select id="rows-per-page" class="ml-2 p-1 border rounded-md">
+                                <option value="5">5</option>
+                                <option value="10" selected>10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+                        <div id="pagination-info" class="text-sm text-gray-600"></div>
+                        <div class="flex space-x-2">
+                            <button id="prev-page" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-1 px-3 rounded-md">Previous</button>
+                            <button id="next-page" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-1 px-3 rounded-md">Next</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Report Table -->
+                <div id="summary-report-panel" class="hidden bg-white p-6 rounded-lg shadow-md overflow-x-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-gray-800">Summary Report (Grouped by Campaign)</h2>
+                        <div class="flex space-x-2">
+                            <button id="export-excel-summary" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md">
+                                Export Excel
+                            </button>
+                            <button id="export-csv-summary" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md">
+                                Export CSV
+                            </button>
+                        </div>
+                    </div>
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="Campaign">Campaign <span id="sort-icon-Campaign-summary"></span></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="TotalImpressions">Impressions <span id="sort-icon-TotalImpressions"></span></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="TotalClicks">Clicks <span id="sort-icon-TotalClicks"></span></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="TotalInstall">Installs <span id="sort-icon-TotalInstall"></span></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="TotalFollow">Follows <span id="sort-icon-TotalFollow"></span></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="TotalEngagement">Engagements <span id="sort-icon-TotalEngagement"></span></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="TotalBudget">Budget <span id="sort-icon-TotalBudget"></span></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="TotalSpent">Spent <span id="sort-icon-TotalSpent"></span></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="CTR">CTR <span id="sort-icon-CTR-summary"></span></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="CPM">CPM <span id="sort-icon-CPM"></span></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="CPC">CPC <span id="sort-icon-CPC"></span></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="CPI">CPI <span id="sort-icon-CPI"></span></th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-key="CPE">CPE <span id="sort-icon-CPE"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="summary-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Rows will be dynamically inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Users Placeholder -->
+                <div id="users-content" class="hidden bg-white p-6 rounded-lg shadow-md text-center">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-2">Users Section</h2>
+                    <p class="text-gray-600">This section is under construction. Please check back later!</p>
+                </div>
+
+                <!-- Reports Placeholder -->
+                <div id="reports-content" class="hidden bg-white p-6 rounded-lg shadow-md text-center">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-2">Reports Section</h2>
+                    <p class="text-gray-600">Additional reporting features will be available here soon.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Message Box Placeholder -->
+    <div id="message-box-container" class="message-box-container hidden"></div>
+
+    <script>
+        // Global state variables
+        let adsData = [];
+        let loading = true;
+        let error = null;
+        let isAuthenticated = false;
+        let currentUser = null;
+
+        // Filter states
+        let campaignSearch = '';
+        let adsNameSearch = '';
+        let platformFilter = 'All';
+        let objectiveFilter = 'All';
+        let dateRange = 'All';
+        let customStartDate = '';
+        let customEndDate = '';
+
+        // Sorting states
+        let sortConfig = { key: null, direction: 'ascending' };
+
+        // Pagination states
+        let page = 0;
+        let rowsPerPage = 10;
+
+        // Navigation state
+        let activeMenu = 'Dashboard';
+
+        const LOGIN_SECTION = document.getElementById('login-section');
+        const APP_SECTION = document.getElementById('app-section');
+        const MESSAGE_BOX_CONTAINER = document.getElementById('message-box-container');
+        const CURRENT_USER_DISPLAY = document.getElementById('current-user-display');
+        const LOADING_SPINNER = document.getElementById('loading-spinner');
+        const DASHBOARD_CONTENT_AREA = document.getElementById('dashboard-content-area');
+        const ERROR_MESSAGE_DIV = document.getElementById('error-message');
+        const ERROR_MESSAGE_TEXT = document.getElementById('error-message-text');
+
+        // Logo URL
+        const LOGO_URL = '/f-logo.jpg'; // Path to your logo in the public directory
+
+        /**
+         * Displays a temporary message box for alerts or confirmations.
+         * @param {string} message The message to display.
+         * @param {string} type 'success' or 'error' for styling.
+         * @param {number} duration Duration in milliseconds before the message hides.
+         */
+        function showMessageBox(message, type = 'error', duration = 6000) {
+            MESSAGE_BOX_CONTAINER.classList.remove('hidden');
+            MESSAGE_BOX_CONTAINER.innerHTML = `
+                <div class="message-box ${type}">
+                    <span>${message}</span>
+                    <button class="message-box-close" onclick="closeMessageBox()">×</button>
+                </div>
+            `;
+            setTimeout(closeMessageBox, duration);
+        }
+
+        /**
+         * Closes the currently displayed message box.
+         */
+        function closeMessageBox() {
+            MESSAGE_BOX_CONTAINER.classList.add('hidden');
+            MESSAGE_BOX_CONTAINER.innerHTML = '';
+        }
+
+        /**
+         * Formats a numerical value as Myanmar Kyats currency.
+         * @param {number} value The number to format.
+         * @returns {string} The formatted currency string or 'N/A'.
+         */
+        function formatCurrency(value) {
+            if (typeof value !== 'number' || isNaN(value)) {
+                return 'N/A';
+            }
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'MMK' }).format(value);
+        }
+
+        /**
+         * Gets the cost metric label (e.g., CPM, CPC) based on objective.
+         * @param {string} objective The ad objective.
+         * @param {number} value The cost metric value.
+         * @returns {string} The formatted cost metric with its label, or 'N/A'.
+         */
+        function getCostMetricLabel(objective, value) {
+            if (typeof value !== 'number' || isNaN(value)) return 'N/A';
+            let label = '';
+            switch (objective) {
+                case 'Impression': label = 'CPM'; break;
+                case 'Click': label = 'CPC'; break;
+                case 'Install': label = 'CPI'; break;
+                case 'Engagement': label = 'CPE'; break;
+                default: return 'N/A';
+            }
+            return `${formatCurrency(value)} (${label})`;
+        }
+
+        /**
+         * Truncates a string and adds a title attribute for the full text.
+         * @param {string} text The text to truncate.
+         * @param {number} maxLength The maximum length before truncation.
+         * @returns {string} The truncated text or the original text.
+         */
+        function truncateText(text, maxLength) {
+            if (text && text.length > maxLength) {
+                return `<span title="${text}">${text.substring(0, maxLength)}...</span>`;
+            }
+            return text;
+        }
+
+        /**
+         * Handles the login attempt, sending credentials to the backend.
+         * Stores JWT on success.
+         */
+        async function handleLogin(e) {
+            e.preventDefault();
+            const usernameInput = document.getElementById('username').value;
+            const passwordInput = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: usernameInput, password: passwordInput })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('jwtToken', data.token);
+                    // Decode username from token (for display purposes)
+                    const decodedToken = JSON.parse(atob(data.token.split('.')[1]));
+                    currentUser = decodedToken.username;
+                    isAuthenticated = true;
+                    showMessageBox('Login successful!', 'success');
+                    renderApp(); // Re-render the app to show dashboard
+                    fetchAdsData(); // Fetch data after successful login
+                } else {
+                    showMessageBox('Login failed: ' + (data.error || 'Invalid credentials'), 'error');
+                }
+            } catch (error) {
+                console.error('Login request error:', error);
+                showMessageBox('An error occurred during login. Please check console.', 'error');
+            }
+        }
+
+        /**
+         * Logs out the current user by removing the JWT.
+         */
+        function handleLogout() {
+            localStorage.removeItem('jwtToken');
+            isAuthenticated = false;
+            currentUser = null;
+            adsData = []; // Clear data on logout
+            loading = false;
+            error = null;
+            showMessageBox('Logged out successfully.', 'success');
+            renderApp(); // Re-render to show login page
+        }
+
+        /**
+         * Checks the authentication status from localStorage.
+         */
+        function checkAuth() {
+            const token = localStorage.getItem('jwtToken');
+            if (token) {
+                try {
+                    // Simple client-side token validation (for UX, server-side is authoritative)
+                    const decodedToken = JSON.parse(atob(token.split('.')[1]));
+                    // Check if token is expired (basic check)
+                    if (decodedToken.exp * 1000 > Date.now()) {
+                        isAuthenticated = true;
+                        currentUser = decodedToken.username;
+                    } else {
+                        console.log('Token expired on client side.');
+                        handleLogout(); // Token expired
+                    }
+                } catch (e) {
+                    console.error('Failed to decode JWT:', e);
+                    handleLogout(); // Invalid token
+                }
+            } else {
+                isAuthenticated = false;
+            }
+        }
+
+        /**
+         * Fetches ad data from the protected backend API.
+         */
+        async function fetchAdsData() {
+            if (!isAuthenticated) {
+                console.warn('Not authenticated. Cannot fetch ads data.');
+                return;
+            }
+
+            loading = true;
+            error = null;
+            renderApp(); // Show loading state
+
+            const token = localStorage.getItem('jwtToken');
+            if (!token) {
+                showMessageBox('Authentication token missing. Please log in again.', 'error');
+                handleLogout();
+                return;
+            }
+
+            try {
+                // Fetch from your Cloudflare Pages Function (which proxies to DATA_URL)
+                const response = await fetch('/api/ads', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    if (response.status === 401 || response.status === 403) {
+                        showMessageBox('Session expired or unauthorized. Please log in again.', 'error');
+                        handleLogout();
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.error || response.statusText}`);
+                }
+
+                const data = await response.json();
+                adsData = data.map(item => {
+                    // Ensure 'Date' is parsed correctly (e.g., 'MM/DD/YYYY')
+                    const dateParts = item.Date.split('/');
+                    const month = parseInt(dateParts[0], 10) - 1; // Month is 0-indexed
+                    const day = parseInt(dateParts[1], 10);
+                    const year = parseInt(dateParts[2], 10);
+                    const parsedDate = new Date(year, month, day);
+
+                    const impressions = parseInt(item.Impression.replace(/,/g, ''), 10) || 0;
+                    const clicks = parseInt(item.Click.replace(/,/g, ''), 10) || 0;
+                    const install = parseInt(item.Install, 10) || 0;
+                    const follow = parseInt(item.Follow, 10) || 0;
+                    const engagement = parseInt(item.Engagement.replace(/,/g, ''), 10) || 0;
+                    const spent = parseFloat(item.Spent.replace(/,/g, '')) || 0;
+                    const budget = parseFloat(item.Budget.replace(/,/g, '')) || 0;
+                    
+                    const calculatedCtr = impressions > 0 ? (clicks / impressions) * 100 : 0;
+
+                    let calculatedCostMetric = NaN;
+                    switch (item.Objective) {
+                        case 'Impression': calculatedCostMetric = impressions > 0 ? (spent / impressions) * 1000 : 0; break;
+                        case 'Click': calculatedCostMetric = clicks > 0 ? spent / clicks : 0; break;
+                        case 'Install': calculatedCostMetric = install > 0 ? spent / install : 0; break;
+                        case 'Engagement': calculatedCostMetric = engagement > 0 ? (spent / engagement) * 1000 : 0; break;
+                        default: calculatedCostMetric = NaN;
+                    }
+
+                    return {
+                        ...item,
+                        Date: parsedDate,
+                        Campaign: item['Core Campaign Name'],
+                        AdsName: item['Ads Campaign Name'],
+                        Impressions: impressions,
+                        Clicks: clicks,
+                        Install: install,
+                        Follow: follow,
+                        Engagement: engagement,
+                        Spent: spent,
+                        Budget: budget,
+                        CTR: calculatedCtr,
+                        Devices: item['Device Target'],
+                        Segment: item['Segment'],
+                        CostMetric: calculatedCostMetric,
+                    };
+                }).filter(item => item.Date instanceof Date && !isNaN(item.Date));
+
+                populateFilterOptions(); // Populate filter dropdowns with unique values
+            } catch (e) {
+                console.error("Failed to fetch ads data:", e);
+                error = "Failed to load data. Please ensure the backend is running and you are authenticated.";
+                showMessageBox(error, 'error');
+            } finally {
+                loading = false;
+                renderApp(); // Re-render the dashboard with fetched data
+            }
+        }
+
+        /**
+         * Populates the platform and objective filter dropdowns based on fetched data.
+         */
+        function populateFilterOptions() {
+            const platformFilterEl = document.getElementById('platform-filter');
+            const objectiveFilterEl = document.getElementById('objective-filter');
+
+            if (platformFilterEl && objectiveFilterEl) {
+                const uniquePlatforms = [...new Set(adsData.map(item => item.Platform))].filter(p => p); // Filter out empty strings
+                const uniqueObjectives = [...new Set(adsData.map(item => item.Objective))].filter(o => o); // Filter out empty strings
+
+                // Clear existing options, keep "All"
+                platformFilterEl.innerHTML = '<option value="All">All Platforms</option>';
+                objectiveFilterEl.innerHTML = '<option value="All">All Objectives</option>';
+
+                uniquePlatforms.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p;
+                    option.textContent = p;
+                    if (platformFilter === p) option.selected = true;
+                    platformFilterEl.appendChild(option);
+                });
+
+                uniqueObjectives.forEach(o => {
+                    const option = document.createElement('option');
+                    option.value = o;
+                    option.textContent = o;
+                    if (objectiveFilter === o) option.selected = true;
+                    objectiveFilterEl.appendChild(option);
+                });
+            }
+        }
+
+        /**
+         * Filters the ads data based on current filter states.
+         * @returns {Array} The filtered data.
+         */
+        function getFilteredData() {
+            let currentData = [...adsData];
+
+            if (campaignSearch) {
+                currentData = currentData.filter(item =>
+                    item.Campaign.toLowerCase().includes(campaignSearch.toLowerCase())
+                );
+            }
+            if (adsNameSearch) {
+                currentData = currentData.filter(item =>
+                    item.AdsName.toLowerCase().includes(adsNameSearch.toLowerCase())
+                );
+            }
+            if (platformFilter !== 'All') {
+                currentData = currentData.filter(item => item.Platform === platformFilter);
+            }
+            if (objectiveFilter !== 'All') {
+                currentData = currentData.filter(item => item.Objective === objectiveFilter);
+            }
+
+            if (dateRange !== 'All') {
+                const now = new Date();
+                now.setHours(0, 0, 0, 0);
+
+                let filterStartDate = null;
+                let filterEndDate = null;
+
+                if (dateRange === 'Last 7 Days') {
+                    filterStartDate = new Date(now);
+                    filterStartDate.setDate(now.getDate() - 6);
+                    filterEndDate = new Date(now);
+                    filterEndDate.setHours(23, 59, 59, 999);
+                } else if (dateRange === 'Last 30 Days') {
+                    filterStartDate = new Date(now);
+                    filterStartDate.setDate(now.getDate() - 29);
+                    filterEndDate = new Date(now);
+                    filterEndDate.setHours(23, 59, 59, 999);
+                } else if (dateRange === 'Last Month') {
+                    filterStartDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                    filterEndDate = new Date(now.getFullYear(), now.getMonth(), 0);
+                    filterEndDate.setHours(23, 59, 59, 999);
+                } else if (dateRange === 'Custom' && customStartDate && customEndDate) {
+                    filterStartDate = new Date(customStartDate);
+                    filterEndDate = new Date(customEndDate);
+                    filterEndDate.setHours(23, 59, 59, 999);
+                }
+
+                if (filterStartDate) filterStartDate.setHours(0, 0, 0, 0);
+
+                if (filterStartDate && filterEndDate) {
+                    currentData = currentData.filter(item =>
+                        item.Date.getTime() >= filterStartDate.getTime() && item.Date.getTime() <= filterEndDate.getTime()
+                    );
+                }
+            }
+            return currentData;
+        }
+
+        /**
+         * Sorts the given data based on the current sort configuration.
+         * @param {Array} data The array of data to sort.
+         * @returns {Array} The sorted data.
+         */
+        function getSortedData(data) {
+            let currentData = [...data];
+            if (sortConfig.key) {
+                currentData.sort((a, b) => {
+                    let aValue = a[sortConfig.key];
+                    let bValue = b[sortConfig.key];
+
+                    if (sortConfig.key === 'Date') {
+                        aValue = a.Date.getTime();
+                        bValue = b.Date.getTime();
+                    } else if (['CPM', 'CPC', 'CPI', 'CPE'].includes(sortConfig.key) && a.CalculatedCostMetric) {
+                        // This path might be incorrect if CostMetric is just a value, not an object.
+                        // Assuming CostMetric itself is the value to sort by for dashboard view.
+                        aValue = a.CostMetric; // Directly use CostMetric value
+                        bValue = b.CostMetric;
+                    }
+
+                    // Handle summary table specific sorting keys
+                    if (activeMenu === 'Summary' && ['CPM', 'CPC', 'CPI', 'CPE', 'CTR'].includes(sortConfig.key)) {
+                        aValue = a[sortConfig.key];
+                        bValue = b[sortConfig.key];
+                    }
+
+
+                    // Handle string comparison for non-numeric values
+                    if (typeof aValue === 'string' && typeof bValue === 'string') {
+                        return sortConfig.direction === 'ascending' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+                    }
+
+                    // Handle numeric comparison
+                    if (aValue < bValue) {
+                        return sortConfig.direction === 'ascending' ? -1 : 1;
+                    }
+                    if (aValue > bValue) {
+                        return sortConfig.direction === 'ascending' ? 1 : -1;
+                    }
+                    return 0;
+                });
+            }
+            return currentData;
+        }
+
+        /**
+         * Calculates overall summary metrics.
+         * @param {Array} data The data to calculate metrics from.
+         * @returns {Object} An object containing summary metrics.
+         */
+        function getSummaryMetrics(data) {
+            if (data.length === 0) {
+                return {
+                    totalImpressions: 0, totalClicks: 0, totalInstall: 0, totalFollow: 0, totalEngagement: 0,
+                    totalSpent: 0, totalBudget: 0, cpm: 0, cpc: 0, cpi: 0, cpe: 0, ctr: 0,
+                };
+            }
+
+            const totalImpressions = data.reduce((sum, item) => sum + item.Impressions, 0);
+            const totalClicks = data.reduce((sum, item) => sum + item.Clicks, 0);
+            const totalInstall = data.reduce((sum, item) => sum + item.Install, 0);
+            const totalFollow = data.reduce((sum, item) => sum + item.Follow, 0);
+            const totalEngagement = data.reduce((sum, item) => sum + item.Engagement, 0);
+            const totalSpent = data.reduce((sum, item) => sum + item.Spent, 0);
+            const totalBudget = data.reduce((sum, item) => sum + item.Budget, 0);
+
+            const cpm = totalImpressions > 0 ? (totalSpent / totalImpressions) * 1000 : 0;
+            const cpc = totalClicks > 0 ? totalSpent / totalClicks : 0;
+            const cpi = totalInstall > 0 ? totalSpent / totalInstall : 0;
+            const cpe = totalEngagement > 0 ? (totalSpent / totalEngagement) * 1000 : 0;
+            const ctr = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
+
+            return {
+                totalImpressions, totalClicks, totalInstall, totalFollow, totalEngagement,
+                totalSpent, totalBudget, cpm, cpc, cpi, cpe, ctr,
+            };
+        }
+
+        /**
+         * Groups data by campaign for the summary report.
+         * @param {Array} data The data to group.
+         * @returns {Array} The grouped data.
+         */
+        function getGroupedSummaryData(data) {
+            const campaignGroups = new Map();
+
+            data.forEach(item => {
+                const campaignName = item.Campaign;
+                if (!campaignGroups.has(campaignName)) {
+                    campaignGroups.set(campaignName, {
+                        Campaign: campaignName,
+                        TotalImpressions: 0,
+                        TotalClicks: 0,
+                        TotalInstall: 0,
+                        TotalFollow: 0,
+                        TotalEngagement: 0,
+                        TotalSpent: 0,
+                        TotalBudget: 0,
+                    });
+                }
+
+                const group = campaignGroups.get(campaignName);
+                group.TotalImpressions += item.Impressions;
+                group.TotalClicks += item.Clicks;
+                group.TotalInstall += item.Install;
+                group.TotalFollow += item.Follow;
+                group.TotalEngagement += item.Engagement;
+                group.TotalSpent += item.Spent;
+                group.TotalBudget += item.Budget;
+            });
+
+            const groupedArray = Array.from(campaignGroups.values()).map(group => {
+                const cpm = group.TotalImpressions > 0 ? (group.TotalSpent / group.TotalImpressions) * 1000 : 0;
+                const cpc = group.TotalClicks > 0 ? group.TotalSpent / group.TotalClicks : 0;
+                const cpi = group.TotalInstall > 0 ? group.TotalSpent / group.TotalInstall : 0;
+                const cpe = group.TotalEngagement > 0 ? (group.TotalSpent / group.TotalEngagement) * 1000 : 0;
+                const ctr = group.TotalImpressions > 0 ? (group.TotalClicks / group.TotalImpressions) * 100 : 0;
+
+                return {
+                    ...group,
+                    CTR: ctr,
+                    CPM: cpm,
+                    CPC: cpc,
+                    CPI: cpi,
+                    CPE: cpe,
+                };
+            });
+
+            return getSortedData(groupedArray); // Apply sorting to grouped data
+        }
+
+        /**
+         * Renders the application based on authentication status and loading state.
+         */
+        function renderApp() {
+            // Hide all content areas initially
+            LOGIN_SECTION.classList.add('hidden');
+            APP_SECTION.classList.add('hidden');
+            LOADING_SPINNER.classList.add('hidden');
+            DASHBOARD_CONTENT_AREA.classList.add('hidden');
+            ERROR_MESSAGE_DIV.classList.add('hidden');
+            document.getElementById('detailed-report-panel').classList.add('hidden');
+            document.getElementById('summary-report-panel').classList.add('hidden');
+            document.getElementById('users-content').classList.add('hidden');
+            document.getElementById('reports-content').classList.add('hidden');
+
+            if (!isAuthenticated) {
+                LOGIN_SECTION.classList.remove('hidden');
+            } else {
+                APP_SECTION.classList.remove('hidden');
+                CURRENT_USER_DISPLAY.textContent = currentUser ? `(${currentUser})` : '';
+
+                if (loading) {
+                    LOADING_SPINNER.classList.remove('hidden');
+                } else if (error) {
+                    ERROR_MESSAGE_DIV.classList.remove('hidden');
+                    ERROR_MESSAGE_TEXT.textContent = error;
+                } else {
+                    DASHBOARD_CONTENT_AREA.classList.remove('hidden');
+                    updateSummaryCards(); // Call new function to update summary cards
+                    updateTables(); // Populate tables after rendering structure
+
+                    // Show active menu content
+                    switch (activeMenu) {
+                        case 'Dashboard':
+                            document.getElementById('detailed-report-panel').classList.remove('hidden');
+                            break;
+                        case 'Summary':
+                            document.getElementById('summary-report-panel').classList.remove('hidden');
+                            break;
+                        case 'Users':
+                            document.getElementById('users-content').classList.remove('hidden');
+                            break;
+                        case 'Reports':
+                            document.getElementById('reports-content').classList.remove('hidden');
+                            break;
+                    }
+                    // Update navigation button active states
+                    document.getElementById('dashboard-btn').classList.toggle('bg-blue-800', activeMenu === 'Dashboard');
+                    document.getElementById('summary-btn').classList.toggle('bg-blue-800', activeMenu === 'Summary');
+                    document.getElementById('users-btn').classList.toggle('bg-blue-800', activeMenu === 'Users');
+                    document.getElementById('reports-btn').classList.toggle('bg-blue-800', activeMenu === 'Reports');
+
+                    document.getElementById('dashboard-btn').classList.toggle('hover:bg-blue-700', activeMenu !== 'Dashboard');
+                    document.getElementById('summary-btn').classList.toggle('hover:bg-blue-700', activeMenu !== 'Summary');
+                    document.getElementById('users-btn').classList.toggle('hover:bg-blue-700', activeMenu !== 'Users');
+                    document.getElementById('reports-btn').classList.toggle('hover:bg-blue-700', activeMenu !== 'Reports');
+
+                }
+            }
+        }
+
+        /**
+         * Attaches all necessary event listeners for dashboard interactions.
+         */
+        function addEventListeners() {
+            // Navigation buttons
+            document.getElementById('dashboard-btn').addEventListener('click', () => { activeMenu = 'Dashboard'; page = 0; renderApp(); });
+            document.getElementById('summary-btn').addEventListener('click', () => { activeMenu = 'Summary'; page = 0; renderApp(); });
+            document.getElementById('users-btn').addEventListener('click', () => { activeMenu = 'Users'; page = 0; renderApp(); });
+            document.getElementById('reports-btn').addEventListener('click', () => { activeMenu = 'Reports'; page = 0; renderApp(); });
+            document.getElementById('logout-btn').addEventListener('click', handleLogout);
+
+            // Filter inputs
+            document.getElementById('campaign-search').addEventListener('input', (e) => { campaignSearch = e.target.value; page = 0; updateTables(); updateSummaryCards(); });
+            document.getElementById('adsname-search').addEventListener('input', (e) => { adsNameSearch = e.target.value; page = 0; updateTables(); updateSummaryCards(); });
+            document.getElementById('platform-filter').addEventListener('change', (e) => { platformFilter = e.target.value; page = 0; updateTables(); updateSummaryCards(); });
+            document.getElementById('objective-filter').addEventListener('change', (e) => { objectiveFilter = e.target.value; page = 0; updateTables(); updateSummaryCards(); });
+            document.getElementById('date-range-filter').addEventListener('change', (e) => {
+                dateRange = e.target.value;
+                const customStartDateEl = document.getElementById('custom-start-date');
+                const customEndDateEl = document.getElementById('custom-end-date');
+
+                if (dateRange !== 'Custom') {
+                    customStartDate = '';
+                    customEndDate = '';
+                    customStartDateEl.value = '';
+                    customEndDateEl.value = '';
+                }
+                customStartDateEl.classList.toggle('hidden', dateRange !== 'Custom');
+                customEndDateEl.classList.toggle('hidden', dateRange !== 'Custom');
+
+                page = 0;
+                updateTables();
+                updateSummaryCards();
+            });
+            document.getElementById('custom-start-date').addEventListener('change', (e) => { customStartDate = e.target.value; page = 0; updateTables(); updateSummaryCards(); });
+            document.getElementById('custom-end-date').addEventListener('change', (e) => { customEndDate = e.target.value; page = 0; updateTables(); updateSummaryCards(); });
+
+            // Export buttons
+            document.getElementById('export-csv-dashboard').addEventListener('click', () => exportToCSV('Dashboard'));
+            document.getElementById('export-excel-dashboard').addEventListener('click', () => exportToExcel('Dashboard'));
+            document.getElementById('export-csv-summary').addEventListener('click', () => exportToCSV('Summary'));
+            document.getElementById('export-excel-summary').addEventListener('click', () => exportToExcel('Summary'));
+
+            // Pagination controls
+            document.getElementById('rows-per-page').addEventListener('change', (e) => {
+                rowsPerPage = parseInt(e.target.value, 10);
+                page = 0; // Reset to first page
+                updateTables();
+            });
+            document.getElementById('prev-page').addEventListener('click', () => {
+                if (page > 0) {
+                    page--;
+                    updateTables();
+                }
+            });
+            document.getElementById('next-page').addEventListener('click', () => {
+                const filtered = getFilteredData();
+                const sortedDetailed = getSortedData(filtered);
+                const totalPages = Math.ceil(sortedDetailed.length / rowsPerPage);
+                if (page < totalPages - 1) {
+                    page++;
+                    updateTables();
+                }
+            });
+
+            // Add event listeners for table headers to enable sorting
+            document.querySelectorAll('#detailed-report-panel th[data-sort-key], #summary-report-panel th[data-sort-key]').forEach(header => {
+                header.addEventListener('click', (e) => {
+                    const key = e.currentTarget.getAttribute('data-sort-key');
+                    requestSort(key);
+                });
+            });
+        }
+
+        /**
+         * Updates the summary cards with current filtered data.
+         */
+        function updateSummaryCards() {
+            const filtered = getFilteredData();
+            const summaryMetrics = getSummaryMetrics(filtered);
+            const summarySection = document.getElementById('summary-section');
+
+            if (summarySection) {
+                summarySection.innerHTML = `
+                    <div class="summary-card">
+                        <span class="title">Total Impressions</span>
+                        <span class="value">${summaryMetrics.totalImpressions.toLocaleString()}</span>
+                    </div>
+                    <div class="summary-card">
+                        <span class="title">Total Clicks</span>
+                        <span class="value">${summaryMetrics.totalClicks.toLocaleString()}</span>
+                    </div>
+                    <div class="summary-card">
+                        <span class="title">Total Installs</span>
+                        <span class="value">${summaryMetrics.totalInstall.toLocaleString()}</span>
+                    </div>
+                    <div class="summary-card">
+                        <span class="title">Total Follows</span>
+                        <span class="value">${summaryMetrics.totalFollow.toLocaleString()}</span>
+                    </div>
+                    <div class="summary-card">
+                        <span class="title">Total Budget (MMK)</span>
+                        <span class="value">${formatCurrency(summaryMetrics.totalBudget)}</span>
+                    </div>
+                    <div class="summary-card">
+                        <span class="title">Total Spent</span>
+                        <span class="value">${formatCurrency(summaryMetrics.totalSpent)}</span>
+                    </div>
+                    <div class="summary-card">
+                        <span class="title">CPM</span>
+                        <span class="value">${formatCurrency(summaryMetrics.cpm)}</span>
+                    </div>
+                    <div class="summary-card">
+                        <span class="title">CPC</span>
+                        <span class="value">${formatCurrency(summaryMetrics.cpc)}</span>
+                    </div>
+                    <div class="summary-card">
+                        <span class="title">CPI</span>
+                        <span class="value">${formatCurrency(summaryMetrics.cpi)}</span>
+                    </div>
+                    <div class="summary-card">
+                        <span class="title">CTR</span>
+                        <span class="value">${summaryMetrics.ctr.toFixed(2)}%</span>
+                    </div>
+                `;
+            }
+        }
+
+        /**
+         * Updates the content of the detailed and summary tables.
+         */
+        function updateTables() {
+            const filtered = getFilteredData();
+            const sortedDetailed = getSortedData(filtered);
+            const groupedSummary = getGroupedSummaryData(filtered);
+
+            // Update Detailed Table
+            const detailedTableBody = document.getElementById('detailed-table-body');
+            if (detailedTableBody) {
+                let rowsHtml = '';
+                const paginatedData = sortedDetailed.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+                paginatedData.forEach(row => {
+                    rowsHtml += `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.Date.toLocaleDateString('en-US')}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${truncateText(row.Campaign, 30)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${truncateText(row.AdsName, 30)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.Platform}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.Objective}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.Impressions.toLocaleString()}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.Clicks.toLocaleString()}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.CTR.toFixed(2)}%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(row.Budget)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(row.Spent)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${getCostMetricLabel(row.Objective, row.CostMetric)}</td>
+                        </tr>
+                    `;
+                });
+                detailedTableBody.innerHTML = rowsHtml;
+                updatePaginationInfo(sortedDetailed.length);
+            }
+
+            // Update Summary Table
+            const summaryTableBody = document.getElementById('summary-table-body');
+            if (summaryTableBody) {
+                let rowsHtml = '';
+                groupedSummary.forEach(row => {
+                    rowsHtml += `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${truncateText(row.Campaign, 30)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.TotalImpressions.toLocaleString()}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.TotalClicks.toLocaleString()}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.TotalInstall.toLocaleString()}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.TotalFollow.toLocaleString()}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.TotalEngagement.toLocaleString()}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(row.TotalBudget)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(row.TotalSpent)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.CTR.toFixed(2)}%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(row.CPM)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(row.CPC)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(row.CPI)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(row.CPE)}</td>
+                        </tr>
+                    `;
+                });
+                summaryTableBody.innerHTML = rowsHtml;
+            }
+
+            // Update sort icons for detailed table
+            document.querySelectorAll('#detailed-report-panel th[data-sort-key]').forEach(header => {
+                const key = header.getAttribute('data-sort-key');
+                const iconElement = header.querySelector('span');
+                if (iconElement) {
+                    iconElement.textContent = getSortIcon(key, 'detailed');
+                }
+            });
+
+            // Update sort icons for summary table
+            document.querySelectorAll('#summary-report-panel th[data-sort-key]').forEach(header => {
+                const key = header.getAttribute('data-sort-key');
+                const iconElement = header.querySelector('span');
+                if (iconElement) {
+                    iconElement.textContent = getSortIcon(key, 'summary');
+                }
+            });
+        }
+
+        /**
+         * Updates pagination information and enables/disables pagination buttons.
+         * @param {number} totalItems The total number of items after filtering.
+         */
+        function updatePaginationInfo(totalItems) {
+            const paginationInfo = document.getElementById('pagination-info');
+            const prevButton = document.getElementById('prev-page');
+            const nextButton = document.getElementById('next-page');
+
+            const startIndex = totalItems === 0 ? 0 : page * rowsPerPage + 1;
+            const endIndex = Math.min((page + 1) * rowsPerPage, totalItems);
+            if (paginationInfo) {
+                paginationInfo.textContent = `Showing ${startIndex}-${endIndex} of ${totalItems} results`;
+            }
+
+            if (prevButton) {
+                prevButton.disabled = page === 0;
+                prevButton.classList.toggle('opacity-50', page === 0);
+                prevButton.classList.toggle('cursor-not-allowed', page === 0);
+            }
+            if (nextButton) {
+                nextButton.disabled = (page + 1) * rowsPerPage >= totalItems;
+                nextButton.classList.toggle('opacity-50', (page + 1) * rowsPerPage >= totalItems);
+                nextButton.classList.toggle('cursor-not-allowed', (page + 1) * rowsPerPage >= totalItems);
+            }
+        }
+
+        /**
+         * Handles sorting request for a table column.
+         * @param {string} key The key to sort by.
+         */
+        function requestSort(key) {
+            let direction = 'ascending';
+            if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+                direction = 'descending';
+            } else if (sortConfig.key === key && sortConfig.direction === 'descending') {
+                key = null; // Reset sort if clicked third time
+                direction = 'ascending';
+            }
+            sortConfig = { key, direction };
+            page = 0; // Reset page on sort change
+            updateTables();
+        }
+
+        /**
+         * Gets the sorting icon based on current sort configuration.
+         * @param {string} key The key to check.
+         * @param {string} tableType 'detailed' or 'summary' to differentiate sort icons if keys overlap.
+         * @returns {string|null} '▲' for ascending, '▼' for descending, or null.
+         */
+        function getSortIcon(key, tableType) {
+            // For summary table, some keys might be duplicates of detailed table but refer to different data
+            // We use the data-sort-key directly for identifying which column header clicked
+            if (activeMenu === 'Dashboard' && tableType === 'detailed' && sortConfig.key === key) {
+                return sortConfig.direction === 'ascending' ? ' ▲' : ' ▼';
+            } else if (activeMenu === 'Summary' && tableType === 'summary' && sortConfig.key === key) {
+                return sortConfig.direction === 'ascending' ? ' ▲' : ' ▼';
+            }
+            return '';
+        }
+
+        /**
+         * Exports data to CSV format.
+         * @param {string} reportType 'Dashboard' or 'Summary'.
+         */
+        function exportToCSV(reportType) {
+            let dataToExport;
+            let headers;
+
+            const filteredData = getFilteredData();
+
+            if (reportType === 'Dashboard') {
+                dataToExport = getSortedData(filteredData);
+                headers = [
+                    'Date', 'Campaign', 'Ads Name', 'Platform', 'Objective', 'Impressions', 'Clicks',
+                    'CTR', 'Budget', 'Spent', 'CostMetric'
+                ];
+            } else { // Summary view
+                dataToExport = getGroupedSummaryData(filteredData);
+                headers = [
+                    'Campaign', 'TotalImpressions', 'TotalClicks', 'TotalInstall', 'TotalFollow',
+                    'TotalEngagement', 'TotalSpent', 'TotalBudget', 'CTR', 'CPM', 'CPC', 'CPI', 'CPE'
+                ];
+            }
+
+            const csvContent = [
+                headers.join(','),
+                ...dataToExport.map(row =>
+                    headers.map(key => {
+                        let value;
+                        // Handle column name variations between raw data and desired export headers
+                        let dataKey = key.replace('Ads Name', 'AdsName').replace('Total Impressions', 'TotalImpressions').replace('Total Clicks', 'TotalClicks').replace('Total Installs', 'TotalInstall').replace('Total Follows', 'TotalFollow').replace('Total Engagements', 'TotalEngagement');
+
+                        if (key === 'Date' && reportType === 'Dashboard') {
+                            value = row.Date.getFullYear() + '-' +
+                                ('0' + (row.Date.getMonth() + 1)).slice(-2) + '-' +
+                                ('0' + row.Date.getDate()).slice(-2);
+                        } else if (key === 'CostMetric' && reportType === 'Dashboard') {
+                            value = row.CostMetric !== undefined && !isNaN(row.CostMetric)
+                                ? row.CostMetric.toFixed(2)
+                                : 'N/A';
+                        } else if (['CTR', 'CPM', 'CPC', 'CPI', 'CPE'].includes(key) && reportType === 'Summary') {
+                             value = row[dataKey] !== undefined && !isNaN(row[dataKey])
+                                ? row[dataKey].toFixed(2)
+                                : 'N/A';
+                        } else if (typeof row[dataKey] === 'number') {
+                            value = row[dataKey].toFixed(2);
+                        } else if (row[dataKey] !== null && row[dataKey] !== undefined) {
+                            value = String(row[dataKey]);
+                        } else {
+                            value = '';
+                        }
+
+                        // Handle commas and quotes for CSV
+                        if (typeof value === 'string' && value.includes(',')) {
+                            value = `"${value.replace(/"/g, '""')}"`;
+                        }
+                        return value;
+                    }).join(',')
+                )
+            ].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${reportType.toLowerCase().replace(' ', '_')}_report.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showMessageBox(`Exported ${reportType} report to CSV!`, 'success');
+        }
+
+        /**
+         * Exports data to Excel (TSV) format.
+         * @param {string} reportType 'Dashboard' or 'Summary'.
+         */
+        function exportToExcel(reportType) {
+            let dataToExport;
+            let headers;
+
+            const filteredData = getFilteredData();
+
+            if (reportType === 'Dashboard') {
+                dataToExport = getSortedData(filteredData);
+                headers = [
+                    'Date', 'Campaign', 'Ads Name', 'Platform', 'Objective', 'Impressions', 'Clicks',
+                    'CTR', 'Budget', 'Spent', 'CostMetric'
+                ];
+            } else { // Summary view
+                dataToExport = getGroupedSummaryData(filteredData);
+                headers = [
+                    'Campaign', 'TotalImpressions', 'TotalClicks', 'TotalInstall', 'TotalFollow',
+                    'TotalEngagement', 'TotalSpent', 'TotalBudget', 'CTR', 'CPM', 'CPC', 'CPI', 'CPE'
+                ];
+            }
+
+            const tsvContent = [
+                headers.join('\t'),
+                ...dataToExport.map(row =>
+                    headers.map(key => {
+                        let value;
+                        // Handle column name variations between raw data and desired export headers
+                        let dataKey = key.replace('Ads Name', 'AdsName').replace('Total Impressions', 'TotalImpressions').replace('Total Clicks', 'TotalClicks').replace('Total Installs', 'TotalInstall').replace('Total Follows', 'TotalFollow').replace('Total Engagements', 'TotalEngagement');
+
+                        if (key === 'Date' && reportType === 'Dashboard') {
+                            value = row.Date.getFullYear() + '-' +
+                                ('0' + (row.Date.getMonth() + 1)).slice(-2) + '-' +
+                                ('0' + row.Date.getDate()).slice(-2);
+                        } else if (key === 'CostMetric' && reportType === 'Dashboard') {
+                            value = row.CostMetric !== undefined && !isNaN(row.CostMetric)
+                                ? row.CostMetric.toFixed(2)
+                                : 'N/A';
+                        } else if (['CTR', 'CPM', 'CPC', 'CPI', 'CPE'].includes(key) && reportType === 'Summary') {
+                            value = row[dataKey] !== undefined && !isNaN(row[dataKey])
+                                ? row[dataKey].toFixed(2)
+                                : 'N/A';
+                        } else if (typeof row[dataKey] === 'number') {
+                            value = row[dataKey].toFixed(2);
+                        } else if (row[dataKey] !== null && row[dataKey] !== undefined) {
+                            value = String(row[dataKey]);
+                        } else {
+                            value = '';
+                        }
+                        return value;
+                    }).join('\t')
+                )
+            ].join('\n');
+
+            const blob = new Blob([tsvContent], { type: 'text/tab-separated-values;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${reportType.toLowerCase().replace(' ', '_')}_report.xls`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showMessageBox(`Exported ${reportType} report to Excel!`, 'success');
+        }
+
+        // Initial check and render on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth(); // Check authentication status
+            renderApp(); // Render UI based on auth status
+            addEventListeners(); // Attach event listeners once DOM is ready
+
+            // If already authenticated, fetch data immediately
+            if (isAuthenticated) {
+                fetchAdsData();
+            }
+        });
+    </script>
+</body>
+</html>

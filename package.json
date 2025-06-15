@@ -1,0 +1,20 @@
+{
+    "name": "futurecom-ads-dashboard",
+    "version": "1.0.0",
+    "description": "Ads Dashboard deployed on Cloudflare Pages with D1 and JWT authentication.",
+    "private": true,
+    "type": "module",
+    "scripts": {
+      "start": "wrangler pages dev public --binding DB=your_ads_db --local-env --port 8787",
+      "deploy": "wrangler pages deploy public --project-name futurecom-ads-dashboard"
+    },
+    "devDependencies": {
+      "wrangler": "^3.57.0"
+    },
+    "dependencies": {
+      "bcryptjs": "^2.4.3",
+      "hono": "^4.3.5",
+      "jose": "^5.2.4"
+    }
+  }
+  
