@@ -1,15 +1,36 @@
 {
-    "name": "fc-ads-dashboard",
-    "version": "0.1.0",
+    "name": "futurecom-ads-dashboard",
+    "version": "1.0.0",
+    "description": "Ads Dashboard deployed on Cloudflare Pages with D1 and JWT authentication.",
     "private": true,
-    "dependencies": {
-      // ... your existing dependencies
-    },
+    "type": "module",
     "scripts": {
-      "start": "react-scripts start",
-      "build": "react-scripts build", // Add this line
-      "test": "react-scripts test",
-      "eject": "react-scripts eject"
+      "start": "wrangler pages dev public --binding DB=your_ads_db --local-env --port 8787",
+      "build": "react-scripts build",
+      "deploy": "wrangler pages deploy public --project-name futurecom-ads-dashboard"
     },
-    // ... rest of your package.json
+    "dependencies": {
+      "react": "^18.2.0",
+      "react-dom": "^18.2.0"
+    },
+    "devDependencies": {
+      "wrangler": "^3.57.0",
+      "bcryptjs": "^2.4.3",
+      "hono": "^4.3.5",
+      "jose": "^5.2.4",
+      "react-scripts": "5.0.1"
+    },
+    "browserslist": {
+      "production": [
+        ">0.2%",
+        "not dead",
+        "not op_mini all"
+      ],
+      "development": [
+        "last 1 chrome version",
+        "last 1 firefox version",
+        "last 1 safari version"
+      ]
+    }
   }
+  
