@@ -3,7 +3,8 @@
 // It handles routing for both authentication and ads data retrieval.
 
 import { Hono } from 'hono';
-import { sign } from 'jose';
+// Correct import: Use SignJWT for creating new JWTs
+import { SignJWT } from 'jose'; 
 import bcrypt from 'bcryptjs';
 
 const app = new Hono();
@@ -43,14 +44,15 @@ app.post('/api/auth/login', async (c) => {
 
         // 3. Generate a JSON Web Token (JWT) upon successful authentication
         // The payload typically includes non-sensitive user identifiers
-        const token = await new sign(
+        // Use SignJWT instead of sign
+        const token = await new SignJWT( 
             { userId: user.id, username: user.username },
             new TextEncoder().encode(env.JWT_SECRET) // Use the JWT_SECRET from environment variables
         )
         .setProtectedHeader({ alg: 'HS256' }) // Algorithm used for signing
         .setExpirationTime('2h') // Token will expire in 2 hours
         .setIssuedAt() // Set the issued at time
-        .sign(); // Sign the token with the secret key
+        .sign(new TextEncoder().encode(env.JWT_SECRET)); // Sign the token with the secret key
 
         // Return a successful login message and the generated JWT
         return c.json({ message: 'Login successful', token });
